@@ -1,4 +1,12 @@
 <p id="notice"><%= notice %></p>
 
+<div id="name"><%= @test.name %></div>
+
+<div id="images">
+  <% @test.imgur_url.split(', ').each do |url| -%>
+    <img src="<%= url %>" />
+  <% end -%>
+</div>
+
 <%= link_to 'Edit', edit_test_path(@test) %> |
 <%= link_to 'Back', tests_path %>
