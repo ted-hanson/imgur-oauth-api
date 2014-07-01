@@ -20,18 +20,20 @@ function stopEvent(e) {
   e.stopPropagation(); 
 }
 
-function putCookie(k, v) {
-  document.cookie = k+'='+encodeURIComponent(v)+';';
+function store(k, v) {
+  localStorage.setItem(k, v);
 }
 
-function getCookie(c) {
-  var x = document.cookie.split(c+'=');
-  return (x.length > 1) ? decodeURIComponent(x[1].split(';')[0]) : null;
+function get(k) {
+  return localStorage.getItem(k); 
 }
 
-function auth() {
-  var x = window.location.href.split('access_token=');
-  return (x.length > 1) ? x[1].split('&')[0] : false;
+function saveImage(id) {
+  var url = 'https://imgur.com/' + id;
+  $('#test_imgur_url').val(function (e, old) {
+    return old + (old ? ', ' : '') + url;
+  });
+  $('#images').append('<img src="'+url+'" />'); 
 }
 
 $(document).ready(function() {
@@ -46,43 +48,26 @@ $(document).ready(function() {
       reader.onloadend = function(e) {
         //only start if the file is done reading
         if (e.target.readyState === FileReader.DONE) {
-          console.log(f.name.split(/\./).slice(-1)[0]);
-          putCookie('ext', f.name.split(/\./).slice(-1)[0]);  
-          putCookie('img', e.target.result);
+          store('img', e.target.result);
+          store('ext', f.name.split(/\./).slice(-1)[0]);  
         } else {
-          return
+          throw Error('File Reader not done loading file!');
         }
-
-        //grab auth token from url
-        token = auth();        
-        
-        //redirect to imgur if no auth token
-        if (!token) {
-          window.location = 'https://api.imgur.com/oauth2/authorize?client_id=691995a204c4537&response_type=token'; 
-        } 
        
         //post image to imgur 
         $.ajax({ 
           url: 'https://api.imgur.com/3/image',
           headers: {
-            Authorization: 'Bearer ' + token,
+            Authorization: 'Client-ID 691995a204c4537',
             Accept: 'application/json'
           },
           type: 'POST',
           data: {
-            image: btoa(getCookie('img')),
+            image: btoa(get('img')),
             type: 'base64'
           },
-          success: function(r) {
-            var url = 'https://imgur.com/' + r.data.id + '.' + getCookie('ext');
-            console.log('Image uploaded successfully to ' + url);
-            $('#test_imgur_url').val(function (e, old) {
-              return old + (old ? ', ' : '') + url;
-            });
-            $('#images').append('<img src="'+url+'" />'); 
-          }
-        });
-         
+          success: function(r) { saveImage(r.data.id + '.' + get('ext')) },  
+        }); 
       };    
   
       reader.readAsBinaryString(f);
