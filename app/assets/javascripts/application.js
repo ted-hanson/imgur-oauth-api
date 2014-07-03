@@ -28,17 +28,29 @@ function submitForm(form) {
     data: form.serialize(),
     success: function(data) { alert('submit success!') }
   });
+  window.location.reload(); 
+}
+
+function deleteImage(url) {
+  $.ajax({
+    type: "DELETE",
+    url: url,
+    success: function(data) { alert('your image was deleted'); }
+  });
+  window.location.reload(); 
 }
 
 function saveImage(file) {
   var url = 'https://imgur.com/' + file;
-  
-  // add live image to page
-  $('#images').append('<img class="remove_imgur_url" src="'+url+'" />'); 
+ 
+  // save user form
+  var user_form = $('.edit_test');
+  submitForm(user_form); 
+ 
   // submit new image to images
-  var form = $('.new_image');
-  form[0].image_url.value = url;
-  submitForm(form);
+  var image_form = $('.new_image');
+  image_form[0].image_url.value = url;
+  submitForm(image_form);
 }
 
 function uploadToImgur(data, ext) {

@@ -16,7 +16,7 @@
   <div id="file_drag">Drop Files Here</div>
   <div id="images">
   <% @test.images.each do |img| -%>
-    <a href="<%= test_image_url(@test, img) %>"><img src="<%= img.url %>" /></a>
+    <a href="javascript:deleteImage('<%= test_image_url(@test, img) %>;');"><img src="<%= img.url %>" /></a>
   <% end -%>
   </div>
 
