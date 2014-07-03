@@ -16,61 +16,76 @@
 //= require_tree .
 
 function stopEvent(e) {
+  e = e || event;
   e.preventDefault();  
   e.stopPropagation(); 
 }
 
-function store(k, v) {
-  localStorage.setItem(k, v);
-}
-
-function get(k) {
-  return localStorage.getItem(k); 
-}
-
-function saveImage(id) {
-  var url = 'https://imgur.com/' + id;
-  $('#test_imgur_url').val(function (e, old) {
-    return old + (old ? ', ' : '') + url;
+function submitForm(form) {
+  $.ajax({
+    type: "POST",
+    url: form.attr("action"),
+    data: form.serialize(),
+    success: function(data) { alert('submit success!') }
   });
-  $('#images').append('<img src="'+url+'" />'); 
+}
+
+function saveImage(file) {
+  var url = 'https://imgur.com/' + file;
+  
+  // add live image to page
+  $('#images').append('<img class="remove_imgur_url" src="'+url+'" />'); 
+  // submit new image to images
+  var form = $('.new_image');
+  form[0].image_url.value = url;
+  submitForm(form);
+}
+
+function uploadToImgur(data, ext) {
+  // send ajax to imgur for anonymous upload with our client-id
+  $.ajax({ 
+    url: 'https://api.imgur.com/3/image',
+    headers: {
+      Authorization: 'Client-ID 691995a204c4537',
+      Accept: 'application/json'
+    },
+    type: 'POST',
+    data: {
+      // btoa makes binary data from FileReader into base64
+      image: btoa(data),
+      type: 'base64'
+    },
+    // save image in our database if it suceeds
+    success: function(r) { saveImage(r.data.id + '.' + ext) },  
+  }); 
+}
+
+function readFileThenUpload(f) {
+  // create FileReader to grab image data
+  reader = new FileReader();
+  // callback for when the FileReader has finished
+  reader.onloadend = function(e) {
+    //post image to imgur 
+    uploadToImgur(e.target.result, f.name.split(/\./).slice(-1)[0]);
+  };    
+  // read file
+  reader.readAsBinaryString(f);
 }
 
 $(document).ready(function() {
-  $('#filedrag').on('dragover', stopEvent);
-  $('#filedrag').on('dragenter', stopEvent);
-  $('#filedrag').on('drop', function(e) {
+  $('#file_drag').on('dragover', stopEvent);
+  $('#file_drag').on('dragenter', stopEvent);
+  $('#file_drag').on('drop', function(e) {
     stopEvent(e);
     files = e.originalEvent.dataTransfer.files;
     for (var i = 0; i < files.length; ++i) {
-      f = files[i];
-      reader = new FileReader();
-      reader.onloadend = function(e) {
-        //only start if the file is done reading
-        if (e.target.readyState === FileReader.DONE) {
-          store('img', e.target.result);
-          store('ext', f.name.split(/\./).slice(-1)[0]);  
-        } else {
-          throw Error('File Reader not done loading file!');
-        }
-       
-        //post image to imgur 
-        $.ajax({ 
-          url: 'https://api.imgur.com/3/image',
-          headers: {
-            Authorization: 'Client-ID 691995a204c4537',
-            Accept: 'application/json'
-          },
-          type: 'POST',
-          data: {
-            image: btoa(get('img')),
-            type: 'base64'
-          },
-          success: function(r) { saveImage(r.data.id + '.' + get('ext')) },  
-        }); 
-      };    
-  
-      reader.readAsBinaryString(f);
+      readFileThenUpload(files[i]);
     }
+  });
+  $('#file_drag').on('click', function() {
+    $('#file_input').click();
+  });
+  $('#file_input').on('change', function(e) {
+    readFileThenUpload(e.target.files[0]);
   });
 });

@@ -1,9 +1,12 @@
 Rails.application.routes.draw do
+
   scope :protocol => 'https://' do
   end
 
   root 'tests#index'
-  resources :tests
+  resources :tests do
+    resources :images
+  end
 
 
   # The priority is based upon order of creation: first created -> highest priority.

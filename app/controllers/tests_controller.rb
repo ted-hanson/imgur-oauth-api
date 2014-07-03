@@ -1,5 +1,5 @@
 class TestsController < ApplicationController
-  before_action :set_test, only: [:show, :edit, :update, :destroy]
+  before_action :set_test
 
   # GET /tests
   # GET /tests.json
@@ -19,6 +19,7 @@ class TestsController < ApplicationController
 
   # GET /tests/1/edit
   def edit
+    @image = Image.new
   end
 
   # POST /tests
@@ -64,11 +65,11 @@ class TestsController < ApplicationController
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_test
-      @test = Test.find(params[:id])
+      @test = Test.find(params[:id]) if params[:id]
     end
 
     # Never trust parameters from the scary internet, only allow the white list through.
     def test_params
-      params.require(:test).permit(:name, :imgur_url)
+      params.require(:test).permit(:name)
     end
 end
